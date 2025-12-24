@@ -9,17 +9,30 @@ interface ObfuscatorProps {
 
 export const Obfuscator: React.FC<ObfuscatorProps> = ({ isOpen, onClose }) => {
   const [key, setKey] = useState<string>('');
-  const [currentHostname, setCurrentHostname] = useState<string>('');
+  const [currentSLD, setCurrentSLD] = useState<string>('');
   const [input, setInput] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [mode, setMode] = useState<'obfuscate' | 'deobfuscate'>('obfuscate');
   const [copied, setCopied] = useState(false);
 
+  const getSLDFromHostname = (hostname: string): string => {
+    if (!hostname || hostname === 'localhost' || !hostname.includes('.')) {
+      return hostname || 'localhost';
+    }
+    const parts = hostname.split('.');
+    // Extraemos el penúltimo segmento (ej: en hello.tligent.com -> tligent)
+    if (parts.length >= 2) {
+      return parts[parts.length - 2];
+    }
+    return hostname;
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname || 'localhost';
-      setCurrentHostname(hostname);
-      setKey(hostname);
+      const sld = getSLDFromHostname(hostname);
+      setCurrentSLD(sld);
+      setKey(sld);
     }
   }, []);
 
@@ -99,15 +112,15 @@ export const Obfuscator: React.FC<ObfuscatorProps> = ({ isOpen, onClose }) => {
                 placeholder="Introduce tu clave..."
               />
               <button 
-                onClick={() => setKey(currentHostname)}
+                onClick={() => setKey(currentSLD)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-700 p-1"
-                title="Resetear a Hostname"
+                title="Resetear al SLD"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
-              Hostname actual: <span className="font-mono text-red-700">{currentHostname}</span>
+              SLD detectado: <span className="font-mono text-red-700">{currentSLD}</span>
             </p>
           </div>
 
