@@ -1,7 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Settings, Globe } from 'lucide-react';
 import { APP_VERSION } from '../constants';
-import { getAllowedIps } from './Parameters';
 
 interface FooterProps {
   userIp: string | null;
@@ -9,8 +8,7 @@ interface FooterProps {
   onShowAjustes: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ userIp, onShowCookies, onShowAjustes }) => {
-  const isDevIp = userIp ? getAllowedIps().includes(userIp) : false;
+export const Footer: React.FC<FooterProps> = ({ onShowCookies, onShowAjustes }) => {
   const rawHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   
   // Detectar modo local (hostname vacío o localhost)
@@ -29,18 +27,6 @@ export const Footer: React.FC<FooterProps> = ({ userIp, onShowCookies, onShowAju
           <span className="text-red-700 font-black">{APP_VERSION}</span>
           
           <div className="flex items-center gap-2">
-            {userIp && (
-              <span className={`font-mono px-2 py-1 rounded border transition-colors shadow-sm ${
-                isLocalMode 
-                  ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                  : isDevIp 
-                    ? 'bg-green-50 text-green-700 border-green-200' 
-                    : 'bg-gray-100 text-gray-500 border-gray-200'
-              }`} title="Tu dirección IP actual">
-                {userIp}
-              </span>
-            )}
-            
             <span className={`px-2 py-1 rounded font-mono flex items-center gap-1.5 shadow-sm border transition-all ${
               isLocalMode 
                 ? 'bg-gray-900 text-white border-gray-900' 

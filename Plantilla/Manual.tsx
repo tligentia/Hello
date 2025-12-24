@@ -41,23 +41,19 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
               <h4 className="font-black uppercase text-xs tracking-[0.2em]">Propósito</h4>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Esta plataforma es un entorno avanzado diseñado para el <strong>análisis estratégico de activos Cripto, DeFi y Fiat</strong>. Permite la integración fluida de modelos de inteligencia artificial para procesar datos complejos y generar insights de mercado en tiempo real.
+              Esta plataforma es un entorno avanzado diseñado para el <strong>análisis estratégico de activos Cripto, DeFi y Fiat</strong>. Permite la integración fluida de modelos de inteligencia artificial para procesar datos complejos.
             </p>
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center gap-3 text-gray-900 border-b border-gray-50 pb-2">
               <ShieldCheck size={20} className="text-red-700" />
-              <h4 className="font-black uppercase text-xs tracking-[0.2em]">Seguridad Multicapa</h4>
+              <h4 className="font-black uppercase text-xs tracking-[0.2em]">Seguridad Persistente</h4>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <h5 className="font-bold text-[10px] uppercase text-gray-900 mb-2 tracking-widest">Acceso PIN</h5>
-                <p className="text-[11px] text-gray-500">Bloqueo de seguridad dinámico con teclado aleatorio para prevenir accesos no autorizados.</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <h5 className="font-bold text-[10px] uppercase text-gray-900 mb-2 tracking-widest">Whitelist IP</h5>
-                <p className="text-[11px] text-gray-500">Permite saltar el login automáticamente si tu dirección IP está registrada en los ajustes de <strong>IPs Autorizadas</strong>.</p>
+                <h5 className="font-bold text-[10px] uppercase text-gray-900 mb-2 tracking-widest">Acceso PIN Único</h5>
+                <p className="text-[11px] text-gray-500">Bloqueo de seguridad dinámico. Una vez desbloqueado con éxito, el sistema recordará tu sesión en este navegador para que no tengas que introducir el PIN constantemente.</p>
               </div>
             </div>
           </section>
@@ -68,7 +64,7 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
               <h4 className="font-black uppercase text-xs tracking-[0.2em]">Motor de IA</h4>
             </div>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Utilizamos el modelo <strong>Gemini 3 Flash</strong> para el procesamiento de lenguaje natural y análisis técnico. Puedes configurar tu propia API Key en el panel de ajustes para personalizar la potencia de cálculo.
+              Utilizamos el modelo <strong>Gemini 3 Flash</strong> para el procesamiento de lenguaje natural. Puedes configurar tu propia API Key en el panel de ajustes para personalizar la potencia de cálculo.
             </p>
           </section>
 

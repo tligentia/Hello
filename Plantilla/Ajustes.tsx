@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, ShieldCheck, Globe, Plus, Trash2, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Zap, Lock } from 'lucide-react';
-import { getShortcutKey, getAllowedIps, saveAllowedIps } from './Parameters';
+import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock } from 'lucide-react';
+import { getShortcutKey } from './Parameters';
 import { Obfuscator } from './Obfuscator';
 
 interface AjustesProps {
@@ -11,22 +11,23 @@ interface AjustesProps {
   userIp: string | null;
 }
 
-export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApiKeySave, userIp }) => {
+export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApiKeySave }) => {
   const [tempKey, setTempKey] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
   const [showApiHelp, setShowApiHelp] = useState(false);
-  const [ips, setIps] = useState<string[]>(getAllowedIps());
-  const [newIp, setNewIp] = useState('');
   const [showObfuscator, setShowObfuscator] = useState(false);
 
-  // Detectar entornos autorizados para la Crypto Tool (Local o Master)
+  // Detectar entornos autorizados para la Crypto Tool (Desarrollo, Hello o Master)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isAuthorizedEnvironment = !hostname || hostname === 'master.tligent.com';
+  const isAuthorizedEnvironment = 
+    !hostname || 
+    hostname === 'localhost' || 
+    hostname === 'hello.tligent.com' || 
+    hostname === 'master.tligent.com';
 
   useEffect(() => {
     setTempKey(apiKey);
-    if (userIp) setNewIp(userIp);
-  }, [apiKey, userIp, isOpen]);
+  }, [apiKey, isOpen]);
 
   if (!isOpen) return null;
 
@@ -38,34 +39,14 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
     setTempKey(finalKey);
   };
 
-  const handleAddIp = (ipToAdd: string) => {
-    const cleanIp = ipToAdd.trim();
-    if (cleanIp && !ips.includes(cleanIp)) {
-      const updated = [...ips, cleanIp];
-      setIps(updated);
-      saveAllowedIps(updated);
-      setNewIp('');
-    }
-  };
-
-  const handleRemoveIp = (ipToRemove: string) => {
-    if (confirm(`¿Eliminar la IP ${ipToRemove} de la lista de acceso rápido?`)) {
-      const updated = ips.filter(ip => ip !== ipToRemove);
-      setIps(updated);
-      saveAllowedIps(updated);
-    }
-  };
-
   const clearMemory = () => {
-    const confirmMessage = `⚠️ ACCIÓN CRÍTICA: RESET TOTAL DEL SISTEMA\n\nEsta acción borrará PERMANENTEMENTE:\n\n1. Clave API de Gemini.\n2. Lista de IPs memorizadas.\n3. Estado de autenticación.\n4. Preferencias de cookies y manual.\n\n¿Estás seguro de que deseas limpiar toda la memoria local y reiniciar la aplicación?`;
+    const confirmMessage = `⚠️ ACCIÓN CRÍTICA: RESET TOTAL DEL SISTEMA\n\nEsta acción borrará PERMANENTEMENTE:\n\n1. Clave API de Gemini.\n2. Estado de autenticación.\n3. Preferencias de cookies y manual.\n\n¿Estás seguro de que deseas limpiar toda la memoria local y reiniciar la aplicación?`;
     
     if (confirm(confirmMessage)) {
       localStorage.clear();
       window.location.reload();
     }
   };
-
-  const isIpAuthorized = userIp ? ips.includes(userIp) : false;
 
   return (
     <>
@@ -192,83 +173,6 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
               </section>
             )}
 
-            {/* Memorizar IP Section */}
-            <section className={`space-y-4 border-t border-gray-50 pt-8`}>
-              <div className="flex items-center gap-2 text-gray-900">
-                <Globe size={18} className="text-red-700" />
-                <h4 className="font-black uppercase text-xs tracking-widest">Memorizar esta IP</h4>
-              </div>
-              
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newIp} 
-                  onChange={(e) => setNewIp(e.target.value)} 
-                  placeholder="IP a memorizar..." 
-                  className="flex-1 bg-gray-50 border border-gray-200 p-3 rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-gray-900"
-                />
-                <button 
-                  onClick={() => handleAddIp(newIp)}
-                  className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all active:scale-90 flex items-center gap-2"
-                  title="Añadir IP a la lista blanca"
-                >
-                  <Plus size={20} />
-                  <span className="text-[10px] font-black uppercase hidden sm:inline">Añadir</span>
-                </button>
-              </div>
-
-              {userIp && (
-                <div className={`p-4 rounded-2xl border flex items-center justify-between transition-colors duration-300 ${isIpAuthorized ? 'bg-green-50 border-green-200' : 'bg-gray-50/50 border-gray-200'}`}>
-                  <div>
-                    <p className={`text-[9px] font-bold uppercase tracking-widest ${isIpAuthorized ? 'text-green-600/70' : 'text-gray-400'}`}>Detección Actual</p>
-                    <p className={`font-mono text-xs font-bold ${isIpAuthorized ? 'text-green-700' : 'text-gray-900'}`}>{userIp}</p>
-                  </div>
-                  {isIpAuthorized ? (
-                     <span className="text-[9px] font-black uppercase text-green-700 bg-green-100/50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-200/50">
-                       <Zap size={10} fill="currentColor"/> Memorizada
-                     </span>
-                  ) : (
-                    <button 
-                      onClick={() => setNewIp(userIp)}
-                      className="text-[9px] font-black uppercase text-red-700 hover:underline"
-                    >
-                      Usar esta IP
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Lista de IPs Autorizadas */}
-              {ips.length > 0 && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Lista de IPs Autorizadas:</p>
-                  <div className="max-h-40 overflow-y-auto space-y-1.5 pr-2 custom-scrollbar">
-                    {ips.map((ip) => (
-                      <div key={ip} className="flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl group hover:border-gray-200 transition-all">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-1.5 h-1.5 rounded-full ${userIp === ip ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                          <span className="font-mono text-[11px] font-bold text-gray-900">{ip}</span>
-                        </div>
-                        <button 
-                          onClick={() => handleRemoveIp(ip)}
-                          className="p-1.5 text-gray-300 hover:text-red-700 transition-colors"
-                          title="Eliminar de la lista"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-gray-50/50 p-3 rounded-xl border border-dashed border-gray-200 text-center">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                  {ips.length} IPs con acceso automático configuradas
-                </p>
-              </div>
-            </section>
-
             {/* System Reset Section */}
             <section className="space-y-4 border-t border-gray-50 pt-8 pb-4">
               <div className="flex items-center gap-2 text-gray-900">
@@ -281,7 +185,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                   <div>
                     <h5 className="font-black text-[11px] uppercase text-red-900 mb-1 tracking-widest">Borrado Total de Memoria</h5>
                     <p className="text-[11px] text-red-800 leading-relaxed font-medium">
-                      Al ejecutar el Reset, la aplicación olvidará instantáneamente todos tus datos: la API Key, las IPs de acceso rápido y tu estado de sesión. Tendrás que volver a configurar todo desde cero.
+                      Al ejecutar el Reset, la aplicación olvidará instantáneamente todos tus datos: la API Key y tu estado de sesión persistente.
                     </p>
                   </div>
                 </div>
@@ -309,7 +213,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
         </div>
       </div>
 
-      {/* Modal del Ofuscador - VISIBLE SOLO EN ENTORNOS AUTORIZADOS */}
+      {/* Modal del Ofuscador */}
       {isAuthorizedEnvironment && <Obfuscator isOpen={showObfuscator} onClose={() => setShowObfuscator(false)} />}
     </>
   );

@@ -1,44 +1,24 @@
-
 import React, { useState, useEffect } from 'react';
-import { getAllowedIps } from './Plantilla/Parameters';
 import { Security } from './Plantilla/Seguridad';
 import { Shell } from './Plantilla/Shell';
 
 export default function App() {
-  // Memorizar el estado de autenticación para no pedir PIN en cada recarga si ya fue exitosa
+  // Memorizar el estado de autenticación de forma persistente
   const [isAuth, setIsAuth] = useState(() => {
-    // Si no hay hostname (entorno local/dev extremo), autorizar automáticamente
-    const isDevMode = typeof window !== 'undefined' && !window.location.hostname;
-    return isDevMode || localStorage.getItem('app_is_auth') === 'true';
+    if (typeof window === 'undefined') return false;
+    // Si no hay hostname (entorno local extremo), autorizar automáticamente
+    const isDevMode = !window.location.hostname || window.location.hostname === 'localhost';
+    return isDevMode || localStorage.getItem('app_is_auth_v2') === 'true';
   });
   
-  const [userIp, setUserIp] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('app_apikey') || '');
-
-  useEffect(() => {
-    // 1. Comprobar si estamos en modo desarrollo por hostname vacío
-    const hostname = window.location.hostname;
-    if (!hostname) {
-      console.log("Sistema: Modo Desarrollo detectado (hostname vacío). Acceso concedido.");
-      handleLoginSuccess();
-    }
-
-    // 2. Obtener IP del usuario y auto-login por IP autorizada
-    fetch('https://api.ipify.org?format=json')
-      .then(r => r.json())
-      .then(data => {
-        setUserIp(data.ip);
-        // Auto-login si la IP está en la lista blanca dinámica memorizada
-        if (getAllowedIps().includes(data.ip)) {
-          handleLoginSuccess();
-        }
-      })
-      .catch(e => console.error("Error validando acceso IP:", e));
-  }, []);
+  const [apiKey, setApiKey] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('app_apikey') || '';
+  });
 
   const handleLoginSuccess = () => {
     setIsAuth(true);
-    localStorage.setItem('app_is_auth', 'true');
+    localStorage.setItem('app_is_auth_v2', 'true');
   };
 
   const saveApiKey = (key: string) => {
@@ -48,12 +28,12 @@ export default function App() {
 
   return (
     <>
-      {/* Pantalla de bloqueo - Solo si no está autenticado ni por IP ni por PIN ni por Hostname vacío */}
+      {/* Pantalla de bloqueo - Solo si no está autenticado */}
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
       
-      {/* Contenido principal con desenfoque si no hay acceso */}
+      {/* Contenido principal */}
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
-        <Shell apiKey={apiKey} onApiKeySave={saveApiKey} userIp={userIp}>
+        <Shell apiKey={apiKey} onApiKeySave={saveApiKey} userIp={null}>
           <div className="flex flex-col items-center justify-center min-h-[55vh]">
             <div className="relative group">
               <h2 className="text-7xl md:text-9xl font-black text-gray-900 tracking-tighter text-center leading-none group-hover:scale-105 transition-transform duration-500">

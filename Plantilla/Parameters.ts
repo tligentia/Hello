@@ -3,8 +3,6 @@ import { LucideIcon } from 'lucide-react';
 import { deobfuscate } from './crypto';
 
 // --- TIPOS ---
-export type CurrencyCode = 'USD' | 'EUR' | 'JPY' | 'BTC' | 'ETH';
-
 export interface StageConfig {
   id: number;
   name: string;
@@ -32,23 +30,7 @@ export const COLORS = {
   aiBorder: 'border-gray-200'
 };
 
-// --- CONFIGURACIÓN DE SEGURIDAD DINÁMICA ---
-// IPs autorizadas por defecto (Sustituidas por los valores solicitados)
-const DEFAULT_IPS = [
-  '179.112.85.173',
-  '137.223.15.63'
-];
-
-export const getAllowedIps = (): string[] => {
-  const stored = localStorage.getItem('app_allowed_ips');
-  return stored ? JSON.parse(stored) : DEFAULT_IPS;
-};
-
-export const saveAllowedIps = (ips: string[]) => {
-  localStorage.setItem('app_allowed_ips', JSON.stringify(ips));
-};
-
-// --- LÓGICA DE CLAVES (NUEVO ALGORITMO XOR) ---
+// --- LÓGICA DE CLAVES (ALGORITMO XOR) ---
 export const getShortcutKey = (shortcut: string): string | null => {
   const code = shortcut.toLowerCase().trim();
   // Claves ofuscadas con XOR y clave de sistema
