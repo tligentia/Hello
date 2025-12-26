@@ -34,8 +34,8 @@ export const COLORS = {
 export const getShortcutKey = (shortcut: string): string | null => {
   const code = shortcut.toLowerCase().trim();
   // Claves ofuscadas con XOR y clave de sistema
-  if (code === 'ok') return deobfuscate('FR8eHh8fAxceEBcaGhIeABseHxcAABsDHB8AARofGBIeGg==', SYSTEM_CRYPTO_KEY);
-  if (code === 'cv') return deobfuscate('FR8eHh8fAxceAxsXFx0CAB8fGBsaHBoDGBoaFhcaGgYcHR8XFh0=', SYSTEM_CRYPTO_KEY);
+  if (code === 'ok') return deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', SYSTEM_CRYPTO_KEY);
+  if (code === 'cv') return deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', SYSTEM_CRYPTO_KEY);
   return null;
 };
 

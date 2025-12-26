@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock } from 'lucide-react';
+import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock, Database, Loader2 } from 'lucide-react';
 import { getShortcutKey } from './Parameters';
 import { Obfuscator } from './Obfuscator';
+import { deobfuscate } from './crypto';
+
+interface VaultItem {
+  label: string;
+  value: string;
+}
 
 interface AjustesProps {
   isOpen: boolean;
@@ -11,13 +17,20 @@ interface AjustesProps {
   userIp: string | null;
 }
 
+const SHEET_ID = '1wJkM8rmiXCrnB0K4h9jtme0m7f5I3y1j1PX5nmEaTII';
+const VAULT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Claves`;
+const SYSTEM_CRYPTO_KEY = "TLIGENT_CORE_v25";
+
 export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApiKeySave }) => {
   const [tempKey, setTempKey] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
   const [showApiHelp, setShowApiHelp] = useState(false);
   const [showObfuscator, setShowObfuscator] = useState(false);
+  
+  // Estado para la bóveda de claves sincronizada
+  const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Detectar entornos autorizados para la Crypto Tool (Desarrollo, Hello o Master)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isAuthorizedEnvironment = 
     !hostname || 
@@ -25,14 +38,75 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
     hostname === 'hello.tligent.com' || 
     hostname === 'master.tligent.com';
 
-  useEffect(() => {
-    setTempKey(apiKey);
-  }, [apiKey, isOpen]);
+  const parseCSVLine = (line: string): string[] => {
+    const columns: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
+        columns.push(current.trim());
+        current = '';
+      } else current += char;
+    }
+    columns.push(current.trim());
+    return columns.map(col => col.replace(/^"|"$/g, '').trim());
+  };
 
-  if (!isOpen) return null;
+  /**
+   * syncDevelopmentVault: Recupera las claves de desarrollo desde la nube.
+   */
+  const syncDevelopmentVault = async () => {
+    if (!isOpen) return;
+    setIsSyncing(true);
+    try {
+      const response = await fetch(VAULT_CSV_URL);
+      if (!response.ok) throw new Error('Cloud Vault Unreachable');
+      const text = await response.text();
+      const rows = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      
+      const data = rows.slice(1).map((row, index) => {
+        const cols = parseCSVLine(row);
+        return {
+          label: cols[0] || `Dev Key ${index + 1}`,
+          value: cols[1] || ''
+        };
+      }).filter(item => item.value);
+      
+      setVaultItems(data);
+    } catch (error) {
+      console.error('Error syncing development vault in Ajustes:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setTempKey(apiKey);
+      syncDevelopmentVault();
+    }
+  }, [apiKey, isOpen]);
 
   const handleKeySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanInput = tempKey.toLowerCase().trim();
+    
+    // 1. Intentar resolver mediante la Bóveda de Desarrollo (Sheets)
+    if (cleanInput === 'ok' || cleanInput === 'cv') {
+      const vaultMatch = vaultItems.find(item => item.label.toLowerCase().trim() === cleanInput);
+      if (vaultMatch) {
+        const resolvedKey = deobfuscate(vaultMatch.value, SYSTEM_CRYPTO_KEY);
+        if (!resolvedKey.startsWith('Error:')) {
+          onApiKeySave(resolvedKey);
+          setTempKey(resolvedKey);
+          return;
+        }
+      }
+    }
+
+    // 2. Fallback: Lógica de Shortcut local (hardcoded en Parameters.ts) o entrada manual
     const shortcut = getShortcutKey(tempKey);
     const finalKey = shortcut || tempKey;
     onApiKeySave(finalKey);
@@ -40,13 +114,14 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
   };
 
   const clearMemory = () => {
-    const confirmMessage = `⚠️ ACCIÓN CRÍTICA: RESET TOTAL DEL SISTEMA\n\nEsta acción borrará PERMANENTEMENTE:\n\n1. Clave API de Gemini.\n2. Estado de autenticación.\n3. Preferencias de cookies y manual.\n\n¿Estás seguro de que deseas limpiar toda la memoria local y reiniciar la aplicación?`;
-    
+    const confirmMessage = `⚠️ ACCIÓN CRÍTICA: RESET TOTAL DEL SISTEMA\n\n¿Estás seguro de que deseas limpiar toda la memoria local?`;
     if (confirm(confirmMessage)) {
       localStorage.clear();
       window.location.reload();
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -61,7 +136,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
               </div>
               <div>
                 <h3 className="font-black text-gray-900 uppercase tracking-tighter text-xl leading-tight">Panel de Ajustes</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Configuración del Sistema</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Configuración Maestra</p>
               </div>
             </div>
             <button 
@@ -81,44 +156,23 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                 <div className="flex items-center gap-2 text-gray-900">
                   <Key size={18} className="text-red-700" />
                   <h4 className="font-black uppercase text-xs tracking-widest">Gemini API Key</h4>
-                  <button 
-                    onClick={() => setShowApiHelp(!showApiHelp)}
-                    className={`p-1 rounded-full transition-colors ${showApiHelp ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-400 hover:text-red-700'}`}
-                    title="¿Cómo conseguir una API Key?"
-                  >
-                    <Info size={14} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isSyncing && <Loader2 size={12} className="animate-spin text-red-700" />}
+                    <button 
+                      onClick={() => setShowApiHelp(!showApiHelp)}
+                      className={`p-1 rounded-full transition-colors ${showApiHelp ? 'bg-red-700 text-white' : 'bg-gray-100 text-gray-400 hover:text-red-700'}`}
+                    >
+                      <Info size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {showApiHelp && (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                  <h5 className="font-black text-[10px] uppercase tracking-widest text-gray-900 flex items-center gap-2">
-                    Pasos para obtener tu clave:
-                  </h5>
-                  <ul className="space-y-3">
-                    {[
-                      { text: 'Accede a Google AI Studio', link: 'https://aistudio.google.com/api-keys' },
-                      { text: 'Inicia sesión con tu cuenta de Google.' },
-                      { text: 'Haz clic en "Get API key" en el menú lateral.' },
-                      { text: 'Crea una clave en un proyecto nuevo o existente.' },
-                      { text: 'Copia la clave y pégala en el campo inferior.' }
-                    ].map((step, i) => (
-                      <li key={i} className="flex items-start gap-3 text-[11px] text-gray-600 leading-tight">
-                        <span className="flex-shrink-0 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-[8px] text-red-700">
-                          {i + 1}
-                        </span>
-                        <span className="flex-1">
-                          {step.text}
-                          {step.link && (
-                            <a href={step.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 ml-1 text-red-700 hover:underline font-bold">
-                              Sitio Web <ExternalLink size={10} />
-                            </a>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                   <p className="text-[11px] text-gray-600 leading-tight">
+                     Introduce tu API Key de <a href="https://aistudio.google.com/api-keys" target="_blank" className="text-red-700 font-bold hover:underline">Google AI Studio</a> o utiliza los códigos dinámicos <span className="font-bold text-gray-900">OK</span> o <span className="font-bold text-gray-900">CV</span> si están configurados en la bóveda.
+                   </p>
                 </div>
               )}
 
@@ -128,27 +182,27 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                     type={showKey ? "text" : "password"} 
                     value={tempKey} 
                     onChange={(e) => setTempKey(e.target.value)} 
-                    placeholder="AIzaSy... o atajo (ok/cv)" 
+                    placeholder="AIzaSy... o Código Maestro" 
                     className="w-full bg-gray-50 border border-gray-200 p-4 pr-12 rounded-xl text-sm font-mono focus:ring-2 focus:ring-gray-900 outline-none transition-all"
                   />
                   <button 
                     type="button"
                     onClick={() => setShowKey(!showKey)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-700 transition-colors p-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-700 p-1"
                   >
                     {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 <button 
                   type="submit" 
-                  className="w-full bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-md shadow-gray-100"
+                  className="w-full bg-gray-900 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-md active:scale-[0.98]"
                 >
-                  Guardar API Key
+                  Validar Acceso
                 </button>
               </form>
             </section>
 
-            {/* Obfuscator Tool Section - VISIBLE SOLO EN ENTORNOS AUTORIZADOS */}
+            {/* Obfuscator Tool Section */}
             {isAuthorizedEnvironment && (
               <section className="space-y-4 border-t border-gray-50 pt-8">
                 <div className="flex items-center gap-2 text-gray-900">
@@ -161,11 +215,11 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-red-700 group-hover:text-white transition-colors">
-                      <Lock size={16} />
+                      <Database size={16} />
                     </div>
                     <div className="text-left">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-900">Ofuscador de Datos</p>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase">Cifra textos con clave maestra</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-900">Gestión de Claves</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">Sincronizar Bóveda en la Nube</p>
                     </div>
                   </div>
                   <ExternalLink size={14} className="text-gray-300 group-hover:text-red-700 transition-colors" />
@@ -175,28 +229,13 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
 
             {/* System Reset Section */}
             <section className="space-y-4 border-t border-gray-50 pt-8 pb-4">
-              <div className="flex items-center gap-2 text-gray-900">
-                <RefreshCcw size={18} className="text-red-700" />
-                <h4 className="font-black uppercase text-xs tracking-widest">Reset del Sistema</h4>
-              </div>
-              <div className="bg-red-50 p-6 rounded-3xl border border-red-100 space-y-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle size={24} className="text-red-700 shrink-0 mt-0.5" />
-                  <div>
-                    <h5 className="font-black text-[11px] uppercase text-red-900 mb-1 tracking-widest">Borrado Total de Memoria</h5>
-                    <p className="text-[11px] text-red-800 leading-relaxed font-medium">
-                      Al ejecutar el Reset, la aplicación olvidará instantáneamente todos tus datos: la API Key y tu estado de sesión persistente.
-                    </p>
-                  </div>
-                </div>
-                <button 
-                  onClick={clearMemory}
-                  className="w-full bg-red-700 hover:bg-red-800 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl shadow-red-200 flex items-center justify-center gap-3"
-                >
-                  <RefreshCcw size={18} />
-                  Borrar todos los datos y reiniciar
-                </button>
-              </div>
+              <button 
+                onClick={clearMemory}
+                className="w-full bg-red-50 hover:bg-red-100 text-red-700 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border border-red-100 flex items-center justify-center gap-3"
+              >
+                <RefreshCcw size={16} />
+                Borrar Datos del Sistema
+              </button>
             </section>
 
           </div>
@@ -205,7 +244,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
           <div className="p-6 border-t border-gray-100 bg-white">
             <button 
               onClick={onClose} 
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-[0.98]"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all"
             >
               Cerrar Ajustes
             </button>
@@ -213,7 +252,6 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
         </div>
       </div>
 
-      {/* Modal del Ofuscador */}
       {isAuthorizedEnvironment && <Obfuscator isOpen={showObfuscator} onClose={() => setShowObfuscator(false)} />}
     </>
   );
