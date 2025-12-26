@@ -12,8 +12,17 @@ export interface StageConfig {
   icon: LucideIcon;
 }
 
-// Clave interna fija para los secretos del sistema
-const SYSTEM_CRYPTO_KEY = "TLIGENT_CORE_v25";
+// --- LÓGICA DE DOMINIO (SLD) ---
+const getSystemSLD = (): string => {
+  if (typeof window === 'undefined') return "localhost";
+  const hostname = window.location.hostname;
+  if (!hostname || hostname === 'localhost' || !hostname.includes('.')) return 'localhost';
+  const parts = hostname.split('.');
+  return parts[parts.length - 2];
+};
+
+// Clave interna dinámica basada en el nombre de la URL
+const SYSTEM_CRYPTO_KEY = getSystemSLD();
 
 // --- CONSTANTES DE ESTILO ---
 export const COLORS = {
@@ -33,7 +42,7 @@ export const COLORS = {
 // --- LÓGICA DE CLAVES (ALGORITMO XOR) ---
 export const getShortcutKey = (shortcut: string): string | null => {
   const code = shortcut.toLowerCase().trim();
-  // Claves ofuscadas con XOR y clave de sistema
+  // Nota: Estos hashes deben haber sido cifrados usando el SLD correspondiente como clave
   if (code === 'ok') return deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', SYSTEM_CRYPTO_KEY);
   if (code === 'cv') return deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', SYSTEM_CRYPTO_KEY);
   return null;
