@@ -6,6 +6,7 @@ export interface AppItem {
   name: string;
   url: string;
   visible: boolean;
+  fase?: string;
 }
 
 // --- CONSTANTS ---
@@ -64,7 +65,8 @@ const fetchAppData = async (): Promise<AppItem[]> => {
     const idx = {
       nombre: header.findIndex(h => h.includes('nombre') || h.includes('name')),
       url: header.findIndex(h => h.includes('url') || h.includes('link')),
-      visible: header.findIndex(h => h.includes('visible') || h.includes('mostrar'))
+      visible: header.findIndex(h => h.includes('visible') || h.includes('mostrar')),
+      fase: header.findIndex(h => h.includes('fase'))
     };
 
     return rows.slice(1).map(row => {
@@ -72,12 +74,13 @@ const fetchAppData = async (): Promise<AppItem[]> => {
       const name = cols[idx.nombre !== -1 ? idx.nombre : 0] || '';
       const url = cols[idx.url !== -1 ? idx.url : 2] || '';
       const visibleStr = cols[idx.visible !== -1 ? idx.visible : 3] || '';
+      const fase = idx.fase !== -1 ? cols[idx.fase] : '';
       
       let isVisible = true;
       if (idx.visible !== -1 && visibleStr !== '') {
         isVisible = ['sí', 'si', 'yes', 'true', '1', 's'].includes(visibleStr.toLowerCase());
       }
-      return { name, url, visible: isVisible };
+      return { name, url, visible: isVisible, fase };
     }).filter(app => app.name && isValidUrl(app.url) && app.visible);
   } catch (error) {
     console.error('Error fetching apps:', error);
@@ -93,6 +96,9 @@ export const MenuApps: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const currentUrl = window.location.href.replace(/\/$/, '');
+  
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isDevMode = !hostname || hostname === 'localhost';
 
   useEffect(() => {
     fetchAppData().then(data => {
@@ -111,6 +117,14 @@ export const MenuApps: React.FC = () => {
 
   const isSameUrl = (appUrl: string) => appUrl.replace(/\/$/, '') === currentUrl;
 
+  // Filtrar aplicaciones según fase y entorno
+  const filteredApps = apps.filter(app => {
+    if (app.fase?.toLowerCase().includes('beta')) {
+      return isDevMode;
+    }
+    return true;
+  });
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -125,11 +139,11 @@ export const MenuApps: React.FC = () => {
             <LayoutGrid size={16} className={`transition-transform duration-500 ${isOpen ? 'rotate-90 text-red-500' : 'text-gray-400 group-hover:text-gray-900'}`} />
         </div>
         <span className="text-[10px] uppercase tracking-widest">APP</span>
-        {!loading && apps.length > 0 && (
+        {!loading && filteredApps.length > 0 && (
           <span className={`px-1.5 py-0.5 text-[9px] rounded-md font-black transition-colors ${
             isOpen ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-900 group-hover:text-white'
           }`}>
-            {apps.length}
+            {filteredApps.length}
           </span>
         )}
       </button>
@@ -150,16 +164,17 @@ export const MenuApps: React.FC = () => {
                 <Loader2 size={24} className="text-red-700 animate-spin" />
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sincronizando</p>
               </div>
-            ) : apps.length === 0 ? (
+            ) : filteredApps.length === 0 ? (
               <div className="p-12 text-center text-gray-300">
                 <Inbox size={32} className="mx-auto mb-2 opacity-20" />
                 <p className="text-[10px] font-bold uppercase tracking-widest">Sin Aplicaciones</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-1">
-                {apps.map((app, i) => {
+                {filteredApps.map((app, i) => {
                   const active = isSameUrl(app.url);
                   const hostname = getSafeHostname(app.url);
+                  const isBeta = app.fase?.toLowerCase().includes('beta');
                   
                   return active ? (
                     <div key={i} className="flex items-center p-3 rounded-xl bg-gray-50/50 border border-transparent opacity-40 cursor-not-allowed select-none transition-all">
@@ -189,6 +204,7 @@ export const MenuApps: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <p className="text-sm font-bold text-gray-900 group-hover:text-white truncate leading-none transition-colors duration-200">
                                 {app.name}
+                                {isBeta && <span className="ml-2 px-1.5 py-0.5 bg-red-700 text-white text-[8px] rounded uppercase">Beta</span>}
                             </p>
                             <ArrowUpRight size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-red-500 transition-all transform translate-y-1 group-hover:translate-y-0" />
                         </div>

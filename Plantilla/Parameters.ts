@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-import { LucideIcon } from 'lucide-react';
 
 // --- LÓGICA DE IDENTIDAD DE ENTORNO (SLD) ---
 export const getSystemSLD = (): string => {
@@ -52,30 +51,67 @@ export const COLORS = {
 // --- RESOLUCIÓN DE SHORTCUTS ---
 export const getShortcutKey = (shortcut: string): string | null => {
   const code = shortcut.toLowerCase().trim();
-  // Claves ofuscadas con el SLD del dominio
   if (code === 'ok') return crypto.deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', MASTER_KEY);
   if (code === 'cv') return crypto.deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', MASTER_KEY);
   return null;
 };
 
 // --- SERVICIO DE CONSULTA GEMINI ---
-export const askGemini = async (prompt: string, apiKey: string): Promise<string> => {
+// Updated to use process.env.API_KEY exclusively as per guidelines.
+export const askGemini = async (prompt: string, modelOverride?: string): Promise<string> => {
+  const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API_KEY_REQUIRED");
   const ai = new GoogleGenAI({ apiKey });
+  const modelName = modelOverride || localStorage.getItem('app_selected_model') || 'gemini-3-flash-preview';
+  
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: modelName,
     contents: prompt,
   });
+  // Use .text property directly as per guidelines.
   return response.text || "Sin respuesta.";
 };
 
-export const validateKey = async (key: string): Promise<boolean> => {
-  if (!key || key.length < 20) return false;
+// Updated to use process.env.API_KEY exclusively as per guidelines.
+export const validateKey = async (): Promise<boolean> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return false;
   try {
-    const ai = new GoogleGenAI({ apiKey: key });
+    const ai = new GoogleGenAI({ apiKey });
     await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: 'ping' });
     return true;
   } catch {
     return false;
+  }
+};
+
+// --- LISTAR MODELOS DISPONIBLES ---
+// Fixed Pager property error by using for-await iteration and updated to use process.env.API_KEY.
+export const listAvailableModels = async (): Promise<string[]> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) return [];
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const result = await ai.models.list();
+    const models: string[] = [];
+    const forbidden = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+    
+    // The list() method returns a Pager which is an AsyncIterable. 
+    // Property 'models' doesn't exist on Pager, so we iterate through it.
+    for await (const m of result) {
+      const name = m.name.replace('models/', '');
+      if (!forbidden.some(f => name.includes(f))) {
+        models.push(name);
+      }
+    }
+    return models;
+  } catch (e) {
+    console.warn("No se pudieron listar modelos dinámicamente, usando fallback.", e);
+    return [
+      'gemini-3-flash-preview',
+      'gemini-3-pro-preview',
+      'gemini-flash-lite-latest',
+      'gemini-2.5-flash-image'
+    ];
   }
 };

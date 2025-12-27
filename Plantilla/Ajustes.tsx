@@ -1,103 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, MessageSquare, Table } from 'lucide-react';
-import { getShortcutKey, getSystemSLD, crypto, validateKey, askGemini } from './Parameters';
+import { X, ShieldCheck, RefreshCcw, ExternalLink, Lock, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, Table, Cpu, ChevronDown } from 'lucide-react';
+import { getSystemSLD, validateKey, askGemini, listAvailableModels } from './Parameters';
 import { Obfuscator } from './Obfuscator';
-
-interface VaultItem { label: string; value: string; }
 
 interface AjustesProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: string;
-  onApiKeySave: (key: string) => void;
   userIp: string | null;
 }
 
 const SHEET_ID = '1wJkM8rmiXCrnB0K4h9jtme0m7f5I3y1j1PX5nmEaTII';
-const VAULT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Claves`;
 
-export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApiKeySave }) => {
-  const [tempKey, setTempKey] = useState(apiKey);
-  const [showKey, setShowKey] = useState(false);
-  const [showApiHelp, setShowApiHelp] = useState(false);
+export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose }) => {
   const [showObfuscator, setShowObfuscator] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isValidating, setIsValidating] = useState(false);
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiAnswer, setAiAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
-  const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
-  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Gestión de Modelos
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState(localStorage.getItem('app_selected_model') || 'gemini-3-flash-preview');
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   const MASTER_KEY = getSystemSLD();
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  
-  // CONDICIÓN DE VISIBILIDAD DE HERRAMIENTAS DE DESARROLLO RESTRINGIDA A LA APP ESPECÍFICA
   const isAuthorized = !hostname || hostname === 'localhost' || hostname === 'hello.tligent.com';
 
-  const syncVault = async () => {
-    if (!isOpen) return;
-    setIsSyncing(true);
+  const loadModels = async () => {
+    setIsLoadingModels(true);
     try {
-      const resp = await fetch(VAULT_CSV_URL);
-      const text = await resp.text();
-      const rows = text.split(/\r?\n/).slice(1);
-      const data = rows.map(r => {
-        const parts = r.split(',').map(p => p.replace(/"/g, '').trim());
-        return { label: parts[0], value: parts[1] };
-      }).filter(i => i.value);
-      setVaultItems(data);
-    } catch (e) { console.error("Vault Error", e); }
-    finally { setIsSyncing(false); }
+      const models = await listAvailableModels();
+      setAvailableModels(models);
+    } catch (e) {
+      console.error("Error loading models", e);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  const handleConfigCheck = async () => {
+    setIsValidating(true);
+    const ok = await validateKey();
+    setStatus(ok ? 'success' : 'error');
+    if (ok) await loadModels();
+    setIsValidating(false);
   };
 
   useEffect(() => {
     if (isOpen) {
-      setTempKey(apiKey);
-      setStatus(apiKey ? 'success' : 'idle');
-      syncVault();
+      handleConfigCheck();
     }
-  }, [apiKey, isOpen]);
+  }, [isOpen]);
 
-  const handleKeySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const input = tempKey.trim();
-    if (!input) { onApiKeySave(''); setStatus('idle'); return; }
-
-    setIsValidating(true);
-    let resolved = input;
-    
-    const vaultMatch = vaultItems.find(v => v.label.toLowerCase() === input.toLowerCase());
-    if (vaultMatch) {
-      resolved = crypto.deobfuscate(vaultMatch.value, MASTER_KEY);
-    } else {
-      const sc = getShortcutKey(input);
-      if (sc) resolved = sc;
-    }
-
-    const ok = await validateKey(resolved);
-    if (ok) {
-      onApiKeySave(resolved);
-      setTempKey(resolved);
-      setStatus('success');
-    } else {
-      setStatus('error');
-    }
-    setIsValidating(false);
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = e.target.value;
+    setSelectedModel(newModel);
+    localStorage.setItem('app_selected_model', newModel);
   };
 
   const handleAiAsk = async () => {
     if (!aiQuestion.trim() || isAsking) return;
     setIsAsking(true);
     try {
-      const ans = await askGemini(aiQuestion, apiKey);
+      const ans = await askGemini(aiQuestion, selectedModel);
       setAiAnswer(ans);
     } catch (e: any) {
       setAiAnswer(`Error: ${e.message}`);
     } finally { setIsAsking(false); }
   };
-
-  const inputBg = status === 'success' ? 'bg-green-50 border-green-200' : status === 'error' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200';
 
   if (!isOpen) return null;
 
@@ -117,35 +89,59 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
         </div>
 
         <div className="p-8 overflow-y-auto space-y-10 custom-scrollbar">
-          {/* SECCIÓN 1: API KEY */}
+          
+          {/* SECCIÓN 0: MOTOR DE IA */}
           <section className="space-y-4">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-gray-900 font-black uppercase text-xs tracking-widest">
+                  <Cpu size={18} className="text-red-700" /> <span>Motor Inteligente</span>
+                </div>
+                {isLoadingModels && <Loader2 size={12} className="animate-spin text-gray-400" />}
+             </div>
+             
+             <div className="relative group">
+               <select 
+                 value={selectedModel}
+                 onChange={handleModelChange}
+                 disabled={isLoadingModels}
+                 className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-xs font-bold uppercase tracking-wider appearance-none focus:ring-2 focus:ring-gray-900 outline-none transition-all cursor-pointer disabled:opacity-50"
+               >
+                 {availableModels.length > 0 ? (
+                   availableModels.map(m => (
+                     <option key={m} value={m}>{m}</option>
+                   ))
+                 ) : (
+                   <option value={selectedModel}>{selectedModel} (Default)</option>
+                 )}
+               </select>
+               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-red-700 transition-colors">
+                  <ChevronDown size={16} />
+               </div>
+             </div>
+          </section>
+
+          {/* SECCIÓN 1: ESTADO DE SISTEMA */}
+          <section className="space-y-4 border-t border-gray-50 pt-8">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2 text-gray-900 font-black uppercase text-xs tracking-widest">
-                <Key size={18} className="text-red-700" /> <span>Gemini API Key</span>
-                {isSyncing && <Loader2 size={12} className="animate-spin text-red-700" />}
+                <ShieldCheck size={18} className="text-red-700" /> <span>Conectividad API</span>
               </div>
-              {status === 'success' && <span className="text-[9px] font-black text-green-600 uppercase flex items-center gap-1"><CheckCircle2 size={10}/> OK</span>}
-              {status === 'error' && <span className="text-[9px] font-black text-red-600 uppercase flex items-center gap-1"><XCircle size={10}/> Error</span>}
+              {status === 'success' && <span className="text-[9px] font-black text-green-600 uppercase flex items-center gap-1"><CheckCircle2 size={10}/> Sistema Listo</span>}
+              {status === 'error' && <span className="text-[9px] font-black text-red-600 uppercase flex items-center gap-1"><XCircle size={10}/> Error de Configuración</span>}
+              {status === 'idle' && <span className="text-[9px] font-black text-gray-400 uppercase">Verificando...</span>}
             </div>
 
-            <form onSubmit={handleKeySubmit} className="space-y-3">
-              <div className="relative">
-                <input 
-                  type={showKey ? "text" : "password"} 
-                  value={tempKey} 
-                  onChange={(e) => { setTempKey(e.target.value); setStatus('idle'); }} 
-                  placeholder="Introduce Key o Código..." 
-                  className={`w-full border p-4 pr-12 rounded-xl text-sm font-mono outline-none transition-all focus:ring-2 focus:ring-gray-900 ${inputBg}`}
-                  disabled={isValidating}
-                />
-                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-700">
-                  {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              <button type="submit" disabled={isValidating} className="w-full bg-gray-900 hover:bg-black text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                {isValidating ? <Loader2 size={14} className="animate-spin" /> : 'Validar Acceso'}
-              </button>
-            </form>
+            <p className="text-[9px] text-gray-400 uppercase text-center font-bold px-4">
+              La API Key se obtiene exclusivamente de variables de entorno. Asegúrate de que el sistema base esté configurado.
+            </p>
+
+            <button 
+              onClick={handleConfigCheck} 
+              disabled={isValidating} 
+              className="w-full bg-gray-900 hover:bg-black text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+            >
+              {isValidating ? <Loader2 size={14} className="animate-spin" /> : 'Refrescar Conexión'}
+            </button>
           </section>
 
           {/* SECCIÓN 2: HERRAMIENTAS DEV */}
@@ -186,7 +182,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                 placeholder="Pregunta algo al sistema..."
                 className="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl text-xs font-medium focus:ring-2 focus:ring-gray-900 outline-none h-24 resize-none"
               />
-              <button onClick={handleAiAsk} disabled={!apiKey || isAsking} className="absolute bottom-3 right-3 p-2 bg-gray-900 text-white rounded-lg hover:bg-black disabled:opacity-20 transition-all">
+              <button onClick={handleAiAsk} disabled={isAsking} className="absolute bottom-3 right-3 p-2 bg-gray-900 text-white rounded-lg hover:bg-black disabled:opacity-20 transition-all">
                 {isAsking ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </div>

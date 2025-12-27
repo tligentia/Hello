@@ -10,11 +10,6 @@ export default function App() {
     return isDevMode || localStorage.getItem('app_is_auth_v2') === 'true';
   });
   
-  const [apiKey, setApiKey] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('app_apikey') || '';
-  });
-
   const [userIp, setUserIp] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
 
@@ -30,19 +25,12 @@ export default function App() {
     localStorage.setItem('app_is_auth_v2', 'true');
   };
 
-  const saveApiKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem('app_apikey', key);
-  };
-
   return (
     <>
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
       
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
         <Cabecera 
-          apiKey={apiKey} 
-          onApiKeySave={saveApiKey} 
           userIp={userIp}
           onManualClick={() => setShowManual(true)}
         >

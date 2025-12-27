@@ -8,13 +8,11 @@ import { MenuApps } from './MenuApps';
 
 interface CabeceraProps {
   children: React.ReactNode;
-  apiKey: string;
-  onApiKeySave: (key: string) => void;
   userIp: string | null;
   onManualClick: () => void;
 }
 
-export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySave, userIp, onManualClick }) => {
+export const Cabecera: React.FC<CabeceraProps> = ({ children, userIp, onManualClick }) => {
   const [showAjustes, setShowAjustes] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
 
@@ -60,8 +58,6 @@ export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySa
       <Ajustes 
         isOpen={showAjustes} 
         onClose={() => setShowAjustes(false)} 
-        apiKey={apiKey}
-        onApiKeySave={onApiKeySave}
         userIp={userIp}
       />
 
