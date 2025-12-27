@@ -90,7 +90,7 @@ const fetchAppData = async (): Promise<AppItem[]> => {
 
 // --- COMPONENT ---
 
-export const MenuApps: React.FC = () => {
+export const AppMenu: React.FC = () => {
   const [apps, setApps] = useState<AppItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +118,6 @@ export const MenuApps: React.FC = () => {
 
   const isSameUrl = (appUrl: string) => appUrl.replace(/\/$/, '') === currentUrl;
 
-  // Filter logic: Show all if authorized (dev/admin domain), otherwise only visible ones
   const filteredApps = apps.filter(app => {
     if (isAuthorized) return true;
     return app.visible;
@@ -176,13 +175,11 @@ export const MenuApps: React.FC = () => {
                   const isBeta = app.fase?.toLowerCase().includes('beta');
                   const isHidden = !app.visible;
                   
-                  // Default colors
                   let bgColor = 'bg-white border-transparent hover:bg-gray-900';
                   let iconColor = 'bg-gray-100 text-gray-900 group-hover:bg-red-600 group-hover:text-white';
                   let titleColor = 'text-gray-900 group-hover:text-white';
                   let subtitleColor = 'text-gray-400 group-hover:text-white/40';
 
-                  // Logic for conditional colors: Beta has priority if "in all cases"
                   if (isBeta) {
                     bgColor = 'bg-emerald-50 border-emerald-100 hover:bg-emerald-900';
                     iconColor = 'bg-emerald-100 text-emerald-700 group-hover:bg-white group-hover:text-emerald-900';

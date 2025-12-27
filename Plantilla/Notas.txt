@@ -1,5 +1,3 @@
-Version Control
-
 
 Añade los archivos de la carpeta Plantilla a cualquier proyecto ya existente, 
 AIStudio adapte las llamadas del proyecto para pasar a utilizar como preferencia 

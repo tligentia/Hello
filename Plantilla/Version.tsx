@@ -1,2 +1,1 @@
-// Define the application version
-export const APP_VERSION = 'v25.12H';
+export const APP_VERSION = 'v25.12K';

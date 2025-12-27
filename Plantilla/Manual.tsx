@@ -84,7 +84,7 @@ export const Manual: React.FC<ManualProps> = ({ isOpen, onClose }) => {
               <HelpCircle size={20} />
             </div>
             <div>
-              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg leading-tight">Manual de Operaciones</h3>
+              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg leading-tight">Manual de Instrucciones</h3>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">System Documentation v2.0</p>
             </div>
           </div>
