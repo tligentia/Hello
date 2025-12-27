@@ -8,7 +8,7 @@ interface PieProps {
   onShowAjustes: () => void;
 }
 
-export const Pie: React.FC<PieProps> = ({ onShowCookies, onShowAjustes }) => {
+export const Pie: React.FC<PieProps> = ({ userIp, onShowCookies, onShowAjustes }) => {
   const rawHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const isLocalMode = !rawHostname || rawHostname === 'localhost';
   const displayHostname = isLocalMode ? 'Desarrollo' : rawHostname;
@@ -24,9 +24,12 @@ export const Pie: React.FC<PieProps> = ({ onShowCookies, onShowAjustes }) => {
         <div className="flex items-center gap-4">
           <span className="text-red-700 font-black">{APP_VERSION}</span>
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded font-mono flex items-center gap-1.5 shadow-sm border transition-all ${
-              isLocalMode ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-200'
-            }`}>
+            <span 
+              title={userIp ? `IP: ${userIp}` : 'Obteniendo IP...'}
+              className={`px-2 py-1 rounded font-mono flex items-center gap-1.5 shadow-sm border transition-all cursor-help ${
+                isLocalMode ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-200'
+              }`}
+            >
               <Globe size={10} className={isLocalMode ? 'text-orange-500' : 'text-red-700'} />
               {displayHostname}
             </span>

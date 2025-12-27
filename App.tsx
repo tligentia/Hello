@@ -14,6 +14,15 @@ export default function App() {
     return localStorage.getItem('app_apikey') || '';
   });
 
+  const [userIp, setUserIp] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => setUserIp(data.ip))
+      .catch(() => setUserIp('IP no disponible'));
+  }, []);
+
   const handleLoginSuccess = () => {
     setIsAuth(true);
     localStorage.setItem('app_is_auth_v2', 'true');
@@ -29,7 +38,7 @@ export default function App() {
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
       
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
-        <Cabecera apiKey={apiKey} onApiKeySave={saveApiKey} userIp={null}>
+        <Cabecera apiKey={apiKey} onApiKeySave={saveApiKey} userIp={userIp}>
           <div className="flex flex-col items-center justify-center min-h-[55vh]">
             <div className="relative group">
               <h2 className="text-7xl md:text-9xl font-black text-gray-900 tracking-tighter text-center leading-none group-hover:scale-105 transition-transform duration-500">
