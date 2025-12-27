@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import { BarChart3, Database, Sparkles, HelpCircle } from 'lucide-react';
 import { COLORS } from './Parameters';
-import { Footer } from './Footer';
+import { Pie } from './Pie';
 import { Cookies } from './Cookies';
 import { Ajustes } from './Ajustes';
 import { Manual } from './Manual';
-import { AppMenu } from './AppMenu';
+import { MenuApps } from './MenuApps';
 
-interface ShellProps {
+interface CabeceraProps {
   children: React.ReactNode;
   apiKey: string;
   onApiKeySave: (key: string) => void;
   userIp: string | null;
 }
 
-export const Shell: React.FC<ShellProps> = ({ children, apiKey, onApiKeySave, userIp }) => {
+export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySave, userIp }) => {
   const [showAjustes, setShowAjustes] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
   const [showManual, setShowManual] = useState(false);
 
   return (
     <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-4 md:p-8`}>
-      {/* HEADER */}
+      {/* HEADER ESTRUCTURAL */}
       <header className="sticky top-0 z-50 bg-white mb-8 border-b border-gray-200 pb-6 pt-4 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-gray-900 flex items-center gap-2">
@@ -30,7 +30,7 @@ export const Shell: React.FC<ShellProps> = ({ children, apiKey, onApiKeySave, us
           </h1>
           <div className="flex items-center gap-4 mt-1">
             <p className="text-gray-400 text-[10px] uppercase font-bold flex items-center gap-1">
-              <Database size={10} /> Scaffolding • <Sparkles size={10} className="text-indigo-500"/> AI READY
+              <Database size={10} /> Scaffolding • <Sparkles size={10} className="text-red-700"/> AI READY
             </p>
           </div>
         </div>
@@ -44,22 +44,20 @@ export const Shell: React.FC<ShellProps> = ({ children, apiKey, onApiKeySave, us
             <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Manual</span>
           </button>
 
-          {/* Menu de aplicaciones situado a la derecha del manual */}
-          <AppMenu />
+          <MenuApps />
         </div>
       </header>
 
-      {/* CONTENT */}
+      {/* CONTENIDO DINÁMICO */}
       <main className="flex-1 max-w-7xl mx-auto w-full">{children}</main>
 
-      {/* FOOTER */}
-      <Footer 
+      {/* PIE DE PÁGINA */}
+      <Pie 
         userIp={userIp} 
         onShowCookies={() => setShowCookies(true)} 
         onShowAjustes={() => setShowAjustes(true)} 
       />
 
-      {/* MODAL AJUSTES (API, IPs, RESET) */}
       <Ajustes 
         isOpen={showAjustes} 
         onClose={() => setShowAjustes(false)} 
@@ -68,10 +66,7 @@ export const Shell: React.FC<ShellProps> = ({ children, apiKey, onApiKeySave, us
         userIp={userIp}
       />
 
-      {/* MODAL PRIVACIDAD Y COOKIES */}
       <Cookies isOpen={showCookies} onClose={() => setShowCookies(false)} />
-
-      {/* MODAL MANUAL DE AYUDA */}
       <Manual isOpen={showManual} onClose={() => setShowManual(false)} />
     </div>
   );

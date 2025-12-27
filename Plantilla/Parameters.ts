@@ -1,19 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { LucideIcon } from 'lucide-react';
-import { deobfuscate } from './crypto';
 
-// --- TIPOS ---
-export interface StageConfig {
-  id: number;
-  name: string;
-  action: string;
-  color: string;
-  bg: string;
-  icon: LucideIcon;
-}
-
-// --- LÓGICA DE DOMINIO (SLD) ---
-const getSystemSLD = (): string => {
+// --- LÓGICA DE IDENTIDAD DE ENTORNO (SLD) ---
+export const getSystemSLD = (): string => {
   if (typeof window === 'undefined') return "localhost";
   const hostname = window.location.hostname;
   if (!hostname || hostname === 'localhost' || !hostname.includes('.')) return 'localhost';
@@ -21,8 +10,30 @@ const getSystemSLD = (): string => {
   return parts[parts.length - 2];
 };
 
-// Clave interna dinámica basada en el nombre de la URL
-const SYSTEM_CRYPTO_KEY = getSystemSLD();
+const MASTER_KEY = getSystemSLD();
+
+// --- MOTOR DE CIFRADO SIMÉTRICO (XOR + BASE64) ---
+export const crypto = {
+  obfuscate: (text: string, key: string = MASTER_KEY): string => {
+    if (!text) return "";
+    const charData = text.split('').map((c, i) => 
+      c.charCodeAt(0) ^ key.charCodeAt(i % key.length)
+    );
+    return btoa(String.fromCharCode(...charData));
+  },
+  deobfuscate: (encoded: string, key: string = MASTER_KEY): string => {
+    if (!encoded) return "";
+    try {
+      const decoded = atob(encoded);
+      const charData = decoded.split('').map((c, i) => 
+        c.charCodeAt(0) ^ key.charCodeAt(i % key.length)
+      );
+      return String.fromCharCode(...charData);
+    } catch (e) {
+      return "Error: Formato inválido";
+    }
+  }
+};
 
 // --- CONSTANTES DE ESTILO ---
 export const COLORS = {
@@ -33,33 +44,38 @@ export const COLORS = {
   accentRed: 'text-red-700',
   border: 'border-gray-200',
   btnPrimary: 'bg-gray-900 hover:bg-black text-white',
-  btnAi: 'bg-gray-900 hover:bg-black text-white', 
   aiBg: 'bg-gray-50',
   aiText: 'text-gray-900',
   aiBorder: 'border-gray-200'
 };
 
-// --- LÓGICA DE CLAVES (ALGORITMO XOR) ---
+// --- RESOLUCIÓN DE SHORTCUTS ---
 export const getShortcutKey = (shortcut: string): string | null => {
   const code = shortcut.toLowerCase().trim();
-  // Nota: Estos hashes deben haber sido cifrados usando el SLD correspondiente como clave
-  if (code === 'ok') return deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', SYSTEM_CRYPTO_KEY);
-  if (code === 'cv') return deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', SYSTEM_CRYPTO_KEY);
+  // Claves ofuscadas con el SLD del dominio
+  if (code === 'ok') return crypto.deobfuscate('NSUTBjYXNicpJlE3BxYWXhhSCFhFPzNQVyYZOBI5PR8ECg41Lw4i', MASTER_KEY);
+  if (code === 'cv') return crypto.deobfuscate('NSUTBjYXNRczGh8LBEwaBzEuFSpDIFUkOEgKIy5fOi0pHTYgIygi', MASTER_KEY);
   return null;
 };
 
-// --- SERVICIO GEMINI ---
-export const generateContent = async (prompt: string, apiKey: string): Promise<string> => {
-  if (!apiKey) throw new Error("API_MISSING");
+// --- SERVICIO DE CONSULTA GEMINI ---
+export const askGemini = async (prompt: string, apiKey: string): Promise<string> => {
+  if (!apiKey) throw new Error("API_KEY_REQUIRED");
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: prompt,
+  });
+  return response.text || "Sin respuesta.";
+};
+
+export const validateKey = async (key: string): Promise<boolean> => {
+  if (!key || key.length < 20) return false;
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-    });
-    return response.text || "";
-  } catch (error) {
-    console.error("AI Error:", error);
-    throw error;
+    const ai = new GoogleGenAI({ apiKey: key });
+    await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: 'ping' });
+    return true;
+  } catch {
+    return false;
   }
 };

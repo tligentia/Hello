@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Security } from './Plantilla/Seguridad';
-import { Shell } from './Plantilla/Shell';
+import { Cabecera } from './Plantilla/Cabecera';
 
 export default function App() {
-  // Memorizar el estado de autenticación de forma persistente
   const [isAuth, setIsAuth] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Si no hay hostname (entorno local extremo), autorizar automáticamente
     const isDevMode = !window.location.hostname || window.location.hostname === 'localhost';
     return isDevMode || localStorage.getItem('app_is_auth_v2') === 'true';
   });
@@ -28,12 +26,10 @@ export default function App() {
 
   return (
     <>
-      {/* Pantalla de bloqueo - Solo si no está autenticado */}
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
       
-      {/* Contenido principal */}
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
-        <Shell apiKey={apiKey} onApiKeySave={saveApiKey} userIp={null}>
+        <Cabecera apiKey={apiKey} onApiKeySave={saveApiKey} userIp={null}>
           <div className="flex flex-col items-center justify-center min-h-[55vh]">
             <div className="relative group">
               <h2 className="text-7xl md:text-9xl font-black text-gray-900 tracking-tighter text-center leading-none group-hover:scale-105 transition-transform duration-500">
@@ -59,7 +55,7 @@ export default function App() {
               </div>
             </div>
           </div>
-        </Shell>
+        </Cabecera>
       </div>
 
       <style>{`

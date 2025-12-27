@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, Inbox, ArrowUpRight, Loader2, Square } from 'lucide-react';
+import { LayoutGrid, Inbox, ArrowUpRight, Loader2 } from 'lucide-react';
 
 // --- TYPES ---
 export interface AppItem {
@@ -87,7 +87,7 @@ const fetchAppData = async (): Promise<AppItem[]> => {
 
 // --- COMPONENT ---
 
-export const AppMenu: React.FC = () => {
+export const MenuApps: React.FC = () => {
   const [apps, setApps] = useState<AppItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -124,7 +124,7 @@ export const AppMenu: React.FC = () => {
         <div className="relative flex items-center justify-center">
             <LayoutGrid size={16} className={`transition-transform duration-500 ${isOpen ? 'rotate-90 text-red-500' : 'text-gray-400 group-hover:text-gray-900'}`} />
         </div>
-        <span className="text-[10px] uppercase tracking-widest">App</span>
+        <span className="text-[10px] uppercase tracking-widest">APP</span>
         {!loading && apps.length > 0 && (
           <span className={`px-1.5 py-0.5 text-[9px] rounded-md font-black transition-colors ${
             isOpen ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-900 group-hover:text-white'

@@ -2,16 +2,14 @@ import React from 'react';
 import { AlertTriangle, Settings, Globe } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
-interface FooterProps {
+interface PieProps {
   userIp: string | null;
   onShowCookies: () => void;
   onShowAjustes: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onShowCookies, onShowAjustes }) => {
+export const Pie: React.FC<PieProps> = ({ onShowCookies, onShowAjustes }) => {
   const rawHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  
-  // Detectar modo local (hostname vacío o localhost)
   const isLocalMode = !rawHostname || rawHostname === 'localhost';
   const displayHostname = isLocalMode ? 'Desarrollo' : rawHostname;
 
@@ -25,12 +23,9 @@ export const Footer: React.FC<FooterProps> = ({ onShowCookies, onShowAjustes }) 
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
         <div className="flex items-center gap-4">
           <span className="text-red-700 font-black">{APP_VERSION}</span>
-          
           <div className="flex items-center gap-2">
             <span className={`px-2 py-1 rounded font-mono flex items-center gap-1.5 shadow-sm border transition-all ${
-              isLocalMode 
-                ? 'bg-gray-900 text-white border-gray-900' 
-                : 'bg-white text-gray-900 border-gray-200'
+              isLocalMode ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-900 border-gray-200'
             }`}>
               <Globe size={10} className={isLocalMode ? 'text-orange-500' : 'text-red-700'} />
               {displayHostname}
@@ -48,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ onShowCookies, onShowAjustes }) 
             <span className="uppercase">Ajustes</span>
           </button>
           
-          <div className="flex gap-3 text-gray-900">
+          <div className="flex gap-3 text-gray-900 font-black">
             <a href="https://jesus.depablos.es" target="_blank" className="hover:text-red-700 transition-colors">Jesús de Pablos</a>
             <span className="text-gray-200">/</span>
             <a href="https://www.tligent.com" target="_blank" className="hover:text-red-700 transition-colors">Tligent</a>
