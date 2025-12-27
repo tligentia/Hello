@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Settings, Globe } from 'lucide-react';
-import { APP_VERSION } from '../constants';
+// Import updated to use the new Version file name
+import { APP_VERSION } from './Version';
 
 interface PieProps {
   userIp: string | null;

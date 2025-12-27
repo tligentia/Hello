@@ -195,20 +195,32 @@ export const MenuApps: React.FC = () => {
                       href={app.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center p-3 rounded-xl hover:bg-gray-900 hover:shadow-lg hover:shadow-black/5 transition-all duration-200 border border-transparent active:scale-[0.98]"
+                      className={`group flex items-center p-3 rounded-xl transition-all duration-200 border active:scale-[0.98] ${
+                        isBeta 
+                          ? 'bg-red-50/20 border-red-100 hover:bg-gray-900 hover:border-gray-900' 
+                          : 'bg-white border-transparent hover:bg-gray-900 hover:shadow-lg hover:shadow-black/5'
+                      }`}
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-900 flex-shrink-0 group-hover:bg-red-600 group-hover:text-white transition-colors duration-200">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 transition-colors duration-200 ${
+                        isBeta 
+                          ? 'bg-red-100 text-red-700 group-hover:bg-red-600 group-hover:text-white' 
+                          : 'bg-gray-100 text-gray-900 group-hover:bg-red-600 group-hover:text-white'
+                      }`}>
                         {getInitials(app.name)}
                       </div>
                       <div className="ml-3 flex-1 overflow-hidden">
                         <div className="flex items-center justify-between">
-                            <p className="text-sm font-bold text-gray-900 group-hover:text-white truncate leading-none transition-colors duration-200">
+                            <p className={`text-sm font-bold truncate leading-none transition-colors duration-200 ${
+                              isBeta ? 'text-red-900 group-hover:text-white' : 'text-gray-900 group-hover:text-white'
+                            }`}>
                                 {app.name}
                                 {isBeta && <span className="ml-2 px-1.5 py-0.5 bg-red-700 text-white text-[8px] rounded uppercase">Beta</span>}
                             </p>
                             <ArrowUpRight size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-red-500 transition-all transform translate-y-1 group-hover:translate-y-0" />
                         </div>
-                        <p className="text-[10px] text-gray-400 group-hover:text-white/40 truncate mt-1.5 pl-3 transition-colors duration-200">
+                        <p className={`text-[10px] truncate mt-1.5 pl-3 transition-colors duration-200 ${
+                          isBeta ? 'text-red-400 group-hover:text-white/40' : 'text-gray-400 group-hover:text-white/40'
+                        }`}>
                           {hostname}
                         </p>
                       </div>
