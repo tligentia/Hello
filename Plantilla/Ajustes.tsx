@@ -192,8 +192,8 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                 </div>
               </div>
               {selectedModel.includes('flash') && (
-                <p className="text-[8px] font-black text-red-700 uppercase tracking-widest ml-1 animate-pulse">
-                  Motor Flash Activo: Multimodal & Low Latency
+                <p className={`text-[8px] font-black uppercase tracking-widest ml-1 animate-pulse transition-colors duration-300 ${status === 'success' ? 'text-green-800' : 'text-red-700'}`}>
+                  MOTOR FLASH ACTIVO: MULTIMODAL & LOW LATENCY
                 </p>
               )}
             </div>
@@ -205,7 +205,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                <div className="flex items-center gap-3">
                  <div className={`w-2.5 h-2.5 rounded-full ${status === 'success' ? 'bg-green-500 animate-pulse' : status === 'error' ? 'bg-red-500' : 'bg-gray-200'}`}></div>
                  <span className="text-[9px] font-black text-gray-900 uppercase tracking-widest">
-                   {status === 'success' ? 'Sync OK' : status === 'error' ? 'Key Error' : 'Idle'}
+                   {status === 'success' ? 'SYNC OK' : status === 'error' ? 'KEY ERROR' : 'IDLE'}
                  </span>
                </div>
                <button onClick={handleConfigCheck} disabled={isValidating} className="text-gray-400 hover:text-red-700 transition-all active:rotate-180">
@@ -282,10 +282,10 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
              onClick={() => { if(confirm("¿Eliminar todos los datos de sesión?")) { localStorage.clear(); window.location.reload(); }}} 
              className="flex-1 border border-red-100 bg-white text-red-700 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all"
            >
-             Reset Memory
+             RESET MEMORY
            </button>
            <button onClick={onClose} className="flex-1 bg-gray-900 hover:bg-black text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95">
-             Cerrar Panel
+             CERRAR PANEL
            </button>
         </div>
       </div>
