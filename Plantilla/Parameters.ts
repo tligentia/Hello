@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 // --- DOMAIN LOGIC ---
 const getSystemSLD = (): string => {
@@ -15,7 +15,6 @@ const MASTER_KEY = getSystemSLD();
  * UI Theme configuration
  * Following requirements: Fondo blanco, contenidos en Negro, rojo y gris
  */
-// Added COLORS export to fix missing member error in Shell.tsx and Cookies.tsx
 export const COLORS = {
   bg: 'bg-white',
   primary: 'text-red-700',
@@ -30,7 +29,6 @@ export const crypto = {
     const charData = text.split('').map((c, i) => 
       c.charCodeAt(0) ^ key.charCodeAt(i % key.length)
     );
-    // Usamos btoa para asegurar que el resultado sea un string transportable
     return btoa(String.fromCharCode(...charData));
   },
   deobfuscate: (encoded: string, key: string = MASTER_KEY): string => {
@@ -57,19 +55,23 @@ export const listAvailableModels = async (): Promise<string[]> => {
   if (!apiKey) return ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
   try {
     const ai = new GoogleGenAI({ apiKey });
-    // Attempting to list models using the correct SDK approach
     const result = await ai.models.list();
     const models: string[] = [];
     for await (const m of result) {
       const shortName = m.name.replace('models/', '');
-      // Filter out older models for better UX
       if (!shortName.includes('1.5') && !shortName.includes('pro-vision')) {
         models.push(shortName);
       }
     }
     return models.length > 0 ? models : ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
   } catch {
-    return ['gemini-3-flash-preview', 'gemini-3-pro-preview', 'gemini-flash-lite-latest', 'gemini-2.5-flash-image'];
+    return [
+      'gemini-3-flash-preview', 
+      'gemini-3-pro-preview', 
+      'gemini-flash-lite-latest', 
+      'gemini-2.5-flash-image',
+      'gemini-2.5-flash-preview-tts'
+    ];
   }
 };
 
@@ -91,10 +93,32 @@ export const askGemini = async (prompt: string, modelOverride?: string): Promise
   const ai = new GoogleGenAI({ apiKey });
   const model = modelOverride || localStorage.getItem('app_selected_model') || 'gemini-3-flash-preview';
   
+  const isTTS = model.includes('tts');
+  const isImage = model.includes('image');
+
   const response = await ai.models.generateContent({
     model: model,
     contents: prompt,
+    config: {
+      // Si es un modelo TTS, forzamos modalidad AUDIO como requiere la API
+      responseModalities: isTTS ? [Modality.AUDIO] : undefined,
+    }
   });
+
+  if (isTTS) {
+    const hasAudio = !!response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    return hasAudio 
+      ? "SISTEMA: Audio generado con éxito. Este Sandbox es textual; para escuchar el resultado se requiere un nodo de salida de audio pcm."
+      : "SISTEMA: El modelo TTS no devolvió datos de audio válidos.";
+  }
+
+  if (isImage) {
+    const hasImage = response.candidates?.[0]?.content?.parts?.some(p => p.inlineData);
+    return hasImage 
+      ? "SISTEMA: Imagen generada con éxito (Base64). Este Sandbox solo muestra texto."
+      : (response.text || "Imagen generada sin descripción textual.");
+  }
+
   return response.text || "No response received.";
 };
 

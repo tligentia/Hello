@@ -46,9 +46,13 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
       const models = await listAvailableModels();
       setAvailableModels(models);
       
-      // Dynamic pre-selection logic
+      // Lógica de pre-selección optimizada: Multimodal + Flash + Reciente
       if (!selectedModel || !models.includes(selectedModel)) {
-        const optimal = models.find(m => m.includes('flash-preview')) || models[0];
+        const optimal = models.find(m => m === 'gemini-3-flash-preview') || 
+                        models.find(m => m.includes('flash-preview')) || 
+                        models.find(m => m.includes('flash')) || 
+                        models[0];
+                        
         if (optimal) {
           setSelectedModel(optimal);
           localStorage.setItem('app_selected_model', optimal);
@@ -79,7 +83,6 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
     const shortcut = getShortcutKey(val);
     if (shortcut) {
       onApiKeySave(shortcut);
-      // Optional: Auto-validate when a shortcut is detected
       setTimeout(() => handleConfigCheck(), 100);
     } else {
       onApiKeySave(val);
@@ -162,7 +165,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
               </div>
             </div>
 
-            {/* MOTOR DE IA DINÁMICO (SITUADO ENTRE KEY Y CRYPTO) */}
+            {/* MOTOR DE IA DINÁMICO */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-900 flex items-center gap-2 px-1">
                 <Cpu size={14} className="text-red-700" /> Inteligencia del Sistema
@@ -172,10 +175,14 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                   value={selectedModel}
                   onChange={handleModelChange}
                   disabled={isLoadingModels}
-                  className="w-full bg-white border border-gray-200 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider appearance-none outline-none focus:ring-2 focus:ring-gray-900 cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="w-full bg-white border border-gray-200 p-3 rounded-2xl text-xs font-bold uppercase tracking-wider appearance-none outline-none focus:ring-2 focus:ring-gray-900 cursor-pointer disabled:opacity-50 shadow-sm transition-colors hover:border-red-200"
                 >
                   {availableModels.length > 0 ? (
-                    availableModels.map(m => <option key={m} value={m}>{m}</option>)
+                    availableModels.map(m => (
+                      <option key={m} value={m} className="font-sans py-2">
+                        {m === 'gemini-3-flash-preview' ? `⭐ ${m} (Recomendado)` : m}
+                      </option>
+                    ))
                   ) : (
                     <option value="">{isLoadingModels ? 'Sincronizando modelos...' : 'No se detectan modelos'}</option>
                   )}
@@ -184,6 +191,11 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                   <ChevronDown size={16} />
                 </div>
               </div>
+              {selectedModel.includes('flash') && (
+                <p className="text-[8px] font-black text-red-700 uppercase tracking-widest ml-1 animate-pulse">
+                  Motor Flash Activo: Multimodal & Low Latency
+                </p>
+              )}
             </div>
           </div>
 
@@ -201,7 +213,6 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
                </button>
              </div>
 
-             {/* BOTÓN CRYPTO TOOL (POSTERIOR AL MENU IA) */}
              {isAuthorized && (
                <button onClick={() => setShowObfuscator(true)} className="flex-1 flex items-center gap-3 p-3 bg-gray-900 text-white border border-transparent rounded-2xl hover:bg-black transition-all group shadow-md active:scale-95">
                  <div className="p-1.5 bg-white/10 rounded-lg group-hover:bg-red-700 transition-colors"><Database size={14} /></div>
@@ -236,7 +247,7 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
              </div>
           </section>
 
-          {/* SANDBOX IA (OPTIMIZADO) */}
+          {/* SANDBOX IA */}
           <section className="space-y-2">
              <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2 px-1">
                <Sparkles size={14} className="text-red-700" /> Sandbox IA

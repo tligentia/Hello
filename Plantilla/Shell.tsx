@@ -31,9 +31,6 @@ export const Shell: React.FC<ShellProps> = ({ children, apiKey, onApiKeySave, us
           </h1>
           <div className="flex items-center gap-4 mt-1">
             <div className="flex items-center gap-1.5">
-              <p className="text-gray-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                <Database size={10} /> Scaffolding • 
-              </p>
               {isKeyValid === true ? (
                 <span className="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-md border border-green-100 animate-in fade-in zoom-in">
                   <CheckCircle2 size={10} /> AI ONLINE
