@@ -75,6 +75,11 @@ export const listAvailableModels = async (): Promise<string[]> => {
   }
 };
 
+/**
+ * [PROCESO DE INICIALIZACIÓN 3]: Verificación de Salud del Motor
+ * Esta función es la que determina el estado AI ONLINE / OFFLINE.
+ * Realiza un 'ping' (petición mínima) para asegurar que la Key es válida.
+ */
 export const validateKey = async (keyInput?: string): Promise<boolean> => {
   const key = keyInput || getActiveApiKey();
   if (!key) return false;
@@ -100,7 +105,6 @@ export const askGemini = async (prompt: string, modelOverride?: string): Promise
     model: model,
     contents: prompt,
     config: {
-      // Si es un modelo TTS, forzamos modalidad AUDIO como requiere la API
       responseModalities: isTTS ? [Modality.AUDIO] : undefined,
     }
   });
