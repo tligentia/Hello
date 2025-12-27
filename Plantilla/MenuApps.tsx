@@ -81,7 +81,7 @@ const fetchAppData = async (): Promise<AppItem[]> => {
         isVisible = ['sí', 'si', 'yes', 'true', '1', 's'].includes(visibleStr.toLowerCase());
       }
       return { name, url, visible: isVisible, fase };
-    }).filter(app => app.name && isValidUrl(app.url) && app.visible);
+    }).filter(app => app.name && isValidUrl(app.url));
   } catch (error) {
     console.error('Error fetching apps:', error);
     return [];
@@ -99,6 +99,7 @@ export const MenuApps: React.FC = () => {
   
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isDevMode = !hostname || hostname === 'localhost';
+  const isAuthorized = isDevMode || hostname === 'hello.tligent.com';
 
   useEffect(() => {
     fetchAppData().then(data => {
@@ -117,12 +118,10 @@ export const MenuApps: React.FC = () => {
 
   const isSameUrl = (appUrl: string) => appUrl.replace(/\/$/, '') === currentUrl;
 
-  // Filtrar aplicaciones según fase y entorno
+  // Filter logic: Show all if authorized (dev/admin domain), otherwise only visible ones
   const filteredApps = apps.filter(app => {
-    if (app.fase?.toLowerCase().includes('beta')) {
-      return isDevMode;
-    }
-    return true;
+    if (isAuthorized) return true;
+    return app.visible;
   });
 
   return (
@@ -173,9 +172,29 @@ export const MenuApps: React.FC = () => {
               <div className="grid grid-cols-1 gap-1">
                 {filteredApps.map((app, i) => {
                   const active = isSameUrl(app.url);
-                  const hostname = getSafeHostname(app.url);
+                  const hostnameDisplay = getSafeHostname(app.url);
                   const isBeta = app.fase?.toLowerCase().includes('beta');
+                  const isHidden = !app.visible;
                   
+                  // Default colors
+                  let bgColor = 'bg-white border-transparent hover:bg-gray-900';
+                  let iconColor = 'bg-gray-100 text-gray-900 group-hover:bg-red-600 group-hover:text-white';
+                  let titleColor = 'text-gray-900 group-hover:text-white';
+                  let subtitleColor = 'text-gray-400 group-hover:text-white/40';
+
+                  // Logic for conditional colors: Beta has priority if "in all cases"
+                  if (isBeta) {
+                    bgColor = 'bg-emerald-50 border-emerald-100 hover:bg-emerald-900';
+                    iconColor = 'bg-emerald-100 text-emerald-700 group-hover:bg-white group-hover:text-emerald-900';
+                    titleColor = 'text-emerald-900 group-hover:text-white';
+                    subtitleColor = 'text-emerald-400 group-hover:text-white/50';
+                  } else if (isHidden) {
+                    bgColor = 'bg-red-50 border-red-100 hover:bg-red-900';
+                    iconColor = 'bg-red-100 text-red-700 group-hover:bg-white group-hover:text-red-900';
+                    titleColor = 'text-red-900 group-hover:text-white';
+                    subtitleColor = 'text-red-400 group-hover:text-white/50';
+                  }
+
                   return active ? (
                     <div key={i} className="flex items-center p-3 rounded-xl bg-gray-50/50 border border-transparent opacity-40 cursor-not-allowed select-none transition-all">
                       <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-[10px] font-black text-gray-400 flex-shrink-0">
@@ -185,7 +204,7 @@ export const MenuApps: React.FC = () => {
                         <p className="text-sm font-bold text-gray-500 truncate leading-none mb-1">{app.name}</p>
                         <p className="text-[10px] text-gray-400 truncate pl-3 flex items-center">
                            <span className="w-1 h-1 rounded-full bg-red-400 mr-2 animate-pulse"></span>
-                           {hostname}
+                           {hostnameDisplay}
                         </p>
                       </div>
                     </div>
@@ -195,33 +214,22 @@ export const MenuApps: React.FC = () => {
                       href={app.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`group flex items-center p-3 rounded-xl transition-all duration-200 border active:scale-[0.98] ${
-                        isBeta 
-                          ? 'bg-red-50/20 border-red-100 hover:bg-gray-900 hover:border-gray-900' 
-                          : 'bg-white border-transparent hover:bg-gray-900 hover:shadow-lg hover:shadow-black/5'
-                      }`}
+                      className={`group flex items-center p-3 rounded-xl transition-all duration-200 border active:scale-[0.98] ${bgColor}`}
                     >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 transition-colors duration-200 ${
-                        isBeta 
-                          ? 'bg-red-100 text-red-700 group-hover:bg-red-600 group-hover:text-white' 
-                          : 'bg-gray-100 text-gray-900 group-hover:bg-red-600 group-hover:text-white'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 transition-colors duration-200 ${iconColor}`}>
                         {getInitials(app.name)}
                       </div>
                       <div className="ml-3 flex-1 overflow-hidden">
                         <div className="flex items-center justify-between">
-                            <p className={`text-sm font-bold truncate leading-none transition-colors duration-200 ${
-                              isBeta ? 'text-red-900 group-hover:text-white' : 'text-gray-900 group-hover:text-white'
-                            }`}>
+                            <p className={`text-sm font-bold truncate leading-none transition-colors duration-200 ${titleColor}`}>
                                 {app.name}
-                                {isBeta && <span className="ml-2 px-1.5 py-0.5 bg-red-700 text-white text-[8px] rounded uppercase">Beta</span>}
+                                {isBeta && <span className="ml-2 px-1.5 py-0.5 bg-emerald-700 text-white text-[8px] rounded uppercase">Beta</span>}
+                                {isHidden && !isBeta && <span className="ml-2 px-1.5 py-0.5 bg-red-700 text-white text-[8px] rounded uppercase">Hidden</span>}
                             </p>
-                            <ArrowUpRight size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-red-500 transition-all transform translate-y-1 group-hover:translate-y-0" />
+                            <ArrowUpRight size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-white transition-all transform translate-y-1 group-hover:translate-y-0" />
                         </div>
-                        <p className={`text-[10px] truncate mt-1.5 pl-3 transition-colors duration-200 ${
-                          isBeta ? 'text-red-400 group-hover:text-white/40' : 'text-gray-400 group-hover:text-white/40'
-                        }`}>
-                          {hostname}
+                        <p className={`text-[10px] truncate mt-1.5 pl-3 transition-colors duration-200 ${subtitleColor}`}>
+                          {hostnameDisplay}
                         </p>
                       </div>
                     </a>
