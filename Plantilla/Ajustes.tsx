@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, MessageSquare } from 'lucide-react';
+import { X, Key, ShieldCheck, RefreshCcw, AlertCircle, Eye, EyeOff, Info, ExternalLink, Lock, Database, Loader2, CheckCircle2, XCircle, Sparkles, Send, MessageSquare, Table } from 'lucide-react';
 import { getShortcutKey, getSystemSLD, crypto, validateKey, askGemini } from './Parameters';
 import { Obfuscator } from './Obfuscator';
 
@@ -148,18 +148,30 @@ export const Ajustes: React.FC<AjustesProps> = ({ isOpen, onClose, apiKey, onApi
             </form>
           </section>
 
-          {/* SECCIÓN 2: CRYPTO TOOL (MOVIDA ARRIBA) */}
+          {/* SECCIÓN 2: HERRAMIENTAS DEV */}
           {isAuthorized && (
             <section className="space-y-4 border-t border-gray-50 pt-8">
               <div className="flex items-center gap-2 text-gray-900 font-black uppercase text-xs tracking-widest mb-2">
                 <Lock size={18} className="text-red-700" /> <span>Herramientas Dev</span>
               </div>
-              <button onClick={() => setShowObfuscator(true)} className="w-full border border-gray-200 hover:border-gray-900 p-4 rounded-2xl flex items-center justify-between group transition-all bg-white hover:shadow-md">
-                <div className="flex items-center gap-3 font-black uppercase text-[10px] tracking-widest">
-                  <Database size={16} className="text-gray-400 group-hover:text-red-700" /> <span>Crypto Tool (XOR)</span>
-                </div>
-                <ExternalLink size={14} className="text-gray-300 group-hover:text-red-700" />
-              </button>
+              <div className="space-y-3">
+                <button onClick={() => setShowObfuscator(true)} className="w-full border border-gray-200 hover:border-gray-900 p-4 rounded-2xl flex items-center justify-between group transition-all bg-white hover:shadow-md">
+                  <div className="flex items-center gap-3 font-black uppercase text-[10px] tracking-widest">
+                    <Database size={16} className="text-gray-400 group-hover:text-red-700" /> <span>Crypto Tool</span>
+                  </div>
+                  <ExternalLink size={14} className="text-gray-300 group-hover:text-red-700" />
+                </button>
+                
+                <button 
+                  onClick={() => window.open(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`, '_blank')}
+                  className="w-full border border-gray-200 hover:border-gray-900 p-4 rounded-2xl flex items-center justify-between group transition-all bg-white hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3 font-black uppercase text-[10px] tracking-widest">
+                    <Table size={16} className="text-gray-400 group-hover:text-red-700" /> <span>Panel Control (Sheets)</span>
+                  </div>
+                  <ExternalLink size={14} className="text-gray-300 group-hover:text-red-700" />
+                </button>
+              </div>
             </section>
           )}
 

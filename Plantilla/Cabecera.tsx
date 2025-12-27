@@ -4,7 +4,6 @@ import { COLORS } from './Parameters';
 import { Pie } from './Pie';
 import { Cookies } from './Cookies';
 import { Ajustes } from './Ajustes';
-import { Manual } from './Manual';
 import { MenuApps } from './MenuApps';
 
 interface CabeceraProps {
@@ -12,12 +11,12 @@ interface CabeceraProps {
   apiKey: string;
   onApiKeySave: (key: string) => void;
   userIp: string | null;
+  onManualClick: () => void;
 }
 
-export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySave, userIp }) => {
+export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySave, userIp, onManualClick }) => {
   const [showAjustes, setShowAjustes] = useState(false);
   const [showCookies, setShowCookies] = useState(false);
-  const [showManual, setShowManual] = useState(false);
 
   return (
     <div className={`min-h-screen ${COLORS.bg} font-sans flex flex-col p-4 md:p-8`}>
@@ -37,7 +36,7 @@ export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySa
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => setShowManual(true)}
+            onClick={onManualClick}
             className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-900 px-4 py-2 rounded-xl transition-all active:scale-95 group shadow-sm"
           >
             <HelpCircle size={18} className="text-red-700 group-hover:scale-110 transition-transform" />
@@ -67,7 +66,6 @@ export const Cabecera: React.FC<CabeceraProps> = ({ children, apiKey, onApiKeySa
       />
 
       <Cookies isOpen={showCookies} onClose={() => setShowCookies(false)} />
-      <Manual isOpen={showManual} onClose={() => setShowManual(false)} />
     </div>
   );
 };

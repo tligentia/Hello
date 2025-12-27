@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Security } from './Plantilla/Seguridad';
 import { Cabecera } from './Plantilla/Cabecera';
+import { Manual } from './Plantilla/Manual';
 
 export default function App() {
   const [isAuth, setIsAuth] = useState(() => {
@@ -15,6 +16,7 @@ export default function App() {
   });
 
   const [userIp, setUserIp] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
     fetch('https://api.ipify.org?format=json')
@@ -38,7 +40,12 @@ export default function App() {
       {!isAuth && <Security onLogin={handleLoginSuccess} />}
       
       <div className={!isAuth ? 'blur-md pointer-events-none select-none opacity-50' : 'animate-in fade-in duration-700'}>
-        <Cabecera apiKey={apiKey} onApiKeySave={saveApiKey} userIp={userIp}>
+        <Cabecera 
+          apiKey={apiKey} 
+          onApiKeySave={saveApiKey} 
+          userIp={userIp}
+          onManualClick={() => setShowManual(true)}
+        >
           <div className="flex flex-col items-center justify-center min-h-[55vh]">
             <div className="relative group">
               <h2 className="text-7xl md:text-9xl font-black text-gray-900 tracking-tighter text-center leading-none group-hover:scale-105 transition-transform duration-500">
@@ -66,6 +73,8 @@ export default function App() {
           </div>
         </Cabecera>
       </div>
+
+      <Manual isOpen={showManual} onClose={() => setShowManual(false)} />
 
       <style>{`
         @keyframes slide {
