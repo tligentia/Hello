@@ -10,6 +10,7 @@ const getSystemSLD = (): string => {
 };
 
 const MASTER_KEY = getSystemSLD();
+export const SHEET_ID = '1wJkM8rmiXCrnB0K4h9jtme0m7f5I3y1j1PX5nmEaTII';
 
 /**
  * UI Theme configuration
@@ -50,6 +51,31 @@ const getActiveApiKey = () => {
   return localStorage.getItem('app_apikey_v2') || process.env.API_KEY;
 };
 
+/**
+ * Recupera una clave específica de la bóveda de Google Sheets
+ */
+export const fetchVaultKey = async (targetLabel: string, seed: string): Promise<string | null> => {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Claves`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const text = await response.text();
+    const rows = text.split(/\r?\n/).filter(line => line.trim() !== '');
+    
+    for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/"/g, '').trim());
+        const label = cols[0];
+        const obfuscatedValue = cols[1];
+        if (label && label.toLowerCase() === targetLabel.toLowerCase()) {
+            return crypto.deobfuscate(obfuscatedValue, seed);
+        }
+    }
+  } catch (e) {
+    console.error("SISTEMA: Error crítico al conectar con el Vault de Google Sheets", e);
+  }
+  return null;
+};
+
 export const listAvailableModels = async (): Promise<string[]> => {
   const apiKey = getActiveApiKey();
   if (!apiKey) return ['gemini-3-flash-preview', 'gemini-3-pro-preview'];
@@ -75,11 +101,6 @@ export const listAvailableModels = async (): Promise<string[]> => {
   }
 };
 
-/**
- * [PROCESO DE INICIALIZACIÓN 3]: Verificación de Salud del Motor
- * Esta función es la que determina el estado AI ONLINE / OFFLINE.
- * Realiza un 'ping' (petición mínima) para asegurar que la Key es válida.
- */
 export const validateKey = async (keyInput?: string): Promise<boolean> => {
   const key = keyInput || getActiveApiKey();
   if (!key) return false;
